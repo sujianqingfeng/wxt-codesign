@@ -1,0 +1,13 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+- google插件使用wxt框架来开发，popup 视图渲染使用 react。
+- 样式方案使用 tailwind css。
+
+# 项目结构
+
+- 共享类型放入 src/types.ts
+- 工具函数放入 src/utils.ts
