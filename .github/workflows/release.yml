@@ -28,13 +28,13 @@ jobs:
 
       - name: add to release
         run: |
-          # 获取当前版本号
-          VERSION=$(node -p "require('./package.json').version")
+          # 使用触发工作流的 Release 的标签名称
+          TAG_NAME=${{ github.event.release.tag_name }}
           
           # 上传 dist 目录下的所有 zip 文件到 Release
           for zip_file in dist/*.zip; do
-            echo "上传文件: $zip_file"
-            gh release upload v$VERSION "$zip_file"
+            echo "上传文件: $zip_file 到 Release: $TAG_NAME"
+            gh release upload "$TAG_NAME" "$zip_file"
           done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
