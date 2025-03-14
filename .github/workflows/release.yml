@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Zip extensions
+        run: |
+          pnpm zip
+
+      - name: add to release
+        run: |
+          # 获取当前版本号
+          VERSION=$(node -p "require('./package.json').version")
+          
+          # 上传 dist 目录下的所有 zip 文件到 Release
+          for zip_file in dist/*.zip; do
+            echo "上传文件: $zip_file"
+            gh release upload v$VERSION "$zip_file"
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        

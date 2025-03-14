@@ -79,6 +79,22 @@ function getAnnotationByNameHelper(
 	return undefined
 }
 
+// 递归构建节点树
+function buildNodeTree(
+	parentId: string,
+	allNodes: AnnotationNode[],
+): AnnotationNode[] {
+	const directChildren = allNodes.filter((node) => node.parent_id === parentId)
+
+	return directChildren.map((child) => {
+		const childrenOfChild = buildNodeTree(child.object_id, allNodes)
+		return {
+			...child,
+			children: childrenOfChild.length > 0 ? childrenOfChild : undefined,
+		}
+	})
+}
+
 // 主函数：根据 name 和 annotationData 获取标注信息
 export function getAnnotationByName(
 	name: string,
@@ -91,7 +107,9 @@ export function getAnnotationByName(
 
 	const id = current.object_id
 
-	const children = annotationData.nodes.filter((node) => node.parent_id === id)
+	// 递归构建完整的子节点树
+	const children = buildNodeTree(id, annotationData.nodes)
+
 	return {
 		...current,
 		children,

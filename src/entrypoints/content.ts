@@ -81,6 +81,10 @@ export default defineContentScript({
 							}
 
 							const frameName = selectedLayerEl.dataset.layerName
+							console.log(
+								"🚀 ~ button.addEventListener ~ frameName:",
+								frameName,
+							)
 							if (!frameName) {
 								return
 							}
