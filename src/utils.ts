@@ -60,23 +60,45 @@ interface AnnotationData {
 	nodes: AnnotationNode[]
 }
 
-// 辅助函数：递归查找与 name 匹配的节点
-function getAnnotationByNameHelper(
-	name: string,
-	nodes: AnnotationNode[],
-): AnnotationNode | undefined {
-	for (const node of nodes) {
-		if (node.name === name) {
-			return node
-		}
-		if (node.children) {
-			const result = getAnnotationByNameHelper(name, node.children)
-			if (result) {
-				return result
-			}
+/**
+ * 清理标注节点数据，移除空数组和指定字段
+ */
+export function cleanAnnotationNode(node: AnnotationNode): AnnotationNode {
+	const result = { ...node }
+
+	// 要移除的特定字段列表
+	const fieldsToRemove = [
+		"markedForExport",
+		"getCSSAsyncSupport",
+		"symbolDescription",
+		"symbolId",
+		"symbolName",
+		"componentProperties",
+		"documentationLinks",
+		"realRect",
+	]
+
+	// 移除指定字段
+	for (const field of fieldsToRemove) {
+		if (field in result) {
+			delete result[field as keyof AnnotationNode]
 		}
 	}
-	return undefined
+
+	// 移除空数组字段
+	for (const key of Object.keys(result)) {
+		const value = result[key as keyof AnnotationNode]
+		if (Array.isArray(value) && value.length === 0) {
+			delete result[key as keyof AnnotationNode]
+		}
+	}
+
+	// 递归处理子节点
+	if (result.children && result.children.length > 0) {
+		result.children = result.children.map((child) => cleanAnnotationNode(child))
+	}
+
+	return result
 }
 
 // 递归构建节点树
@@ -88,6 +110,7 @@ function buildNodeTree(
 
 	return directChildren.map((child) => {
 		const childrenOfChild = buildNodeTree(child.object_id, allNodes)
+		// 不在这里应用清理逻辑，而是在最终返回时一次性清理整个树
 		return {
 			...child,
 			children: childrenOfChild.length > 0 ? childrenOfChild : undefined,
@@ -95,12 +118,13 @@ function buildNodeTree(
 	})
 }
 
-// 主函数：根据 name 和 annotationData 获取标注信息
-export function getAnnotationByName(
-	name: string,
+export function getAnnotationByObjectId(
+	objectId: string,
 	annotationData: AnnotationData,
 ): AnnotationNode | undefined {
-	const current = getAnnotationByNameHelper(name, annotationData.nodes)
+	const current = annotationData.nodes.find(
+		(node) => node.object_id === objectId,
+	)
 	if (!current) {
 		return
 	}
@@ -110,10 +134,11 @@ export function getAnnotationByName(
 	// 递归构建完整的子节点树
 	const children = buildNodeTree(id, annotationData.nodes)
 
-	return {
+	// 清理节点数据
+	return cleanAnnotationNode({
 		...current,
 		children,
-	}
+	})
 }
 
 export function showToast(

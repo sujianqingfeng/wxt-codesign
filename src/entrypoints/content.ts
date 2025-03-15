@@ -3,7 +3,7 @@ import { onMessage } from "../messages"
 import {
 	fetchScreenDetailApi,
 	fetchScreensApi,
-	getAnnotationByName,
+	getAnnotationByObjectId,
 	parseDesignIdFromUrl,
 	showToast,
 } from "../utils"
@@ -69,6 +69,7 @@ export default defineContentScript({
 							const designId = parseDesignIdFromUrl(window.location.href)
 
 							if (!designId) {
+								showToast("无法获取设计ID", "error")
 								return
 							}
 
@@ -77,15 +78,15 @@ export default defineContentScript({
 							) as HTMLElement | null
 
 							if (!selectedLayerEl) {
+								showToast("无法获取选中的图层", "error")
 								return
 							}
 
 							const frameName = selectedLayerEl.dataset.layerName
-							console.log(
-								"🚀 ~ button.addEventListener ~ frameName:",
-								frameName,
-							)
-							if (!frameName) {
+							const objectId = selectedLayerEl.dataset.objectId
+
+							if (!frameName || !objectId) {
+								showToast("无法获取图层信息", "error")
 								return
 							}
 
@@ -94,11 +95,13 @@ export default defineContentScript({
 							) as HTMLElement | null
 
 							if (!screenElement) {
+								showToast("无法获取当前屏幕", "error")
 								return
 							}
 
 							const screenId = screenElement?.dataset.id
 							if (!screenId) {
+								showToast("无法获取当前屏幕ID", "error")
 								return
 							}
 
@@ -109,13 +112,14 @@ export default defineContentScript({
 
 							const metaUrl = screenDetail?.meta_url
 							if (!metaUrl) {
+								showToast("无法获取当前屏幕的metaUrl", "error")
 								return
 							}
 
 							const response = await fetch(metaUrl)
 							const data = await response.json()
 
-							const annotationData = getAnnotationByName(frameName, {
+							const annotationData = getAnnotationByObjectId(objectId, {
 								nodes: [...data.groups, ...data.layers],
 							})
 
