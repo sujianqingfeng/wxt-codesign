@@ -1,10 +1,12 @@
 import { defineContentScript } from "wxt/sandbox"
+import { ANNOTATION_BUTTON_STYLE, COPY_URL_BUTTON_STYLE } from "../constants"
 import { onMessage } from "../messages"
 import {
 	fetchScreenDetailApi,
 	fetchScreensApi,
 	getAnnotationByObjectId,
 	parseDesignIdFromUrl,
+	parseSliceUrl,
 	showToast,
 } from "../utils"
 
@@ -16,6 +18,7 @@ export default defineContentScript({
 			const screenInspector = document.querySelector(".screen-inspector")
 
 			if (screenInspector) {
+				// Add custom copy annotation data buttons
 				const copyNodes = screenInspector.querySelectorAll(".css-node__copy")
 
 				for (const copyNode of copyNodes) {
@@ -28,19 +31,7 @@ export default defineContentScript({
 						const button = document.createElement("button")
 						button.className = "mcp-custom-button"
 						button.textContent = "获取标注数据"
-						button.style.cssText = `
-							margin-right: 8px;
-							padding: 4px 12px;
-							border: 1px solid #e2e8f0;
-							border-radius: 4px;
-							background-color: #ffffff;
-							color: #475569;
-							font-size: 12px;
-							font-weight: 500;
-							cursor: pointer;
-							transition: all 0.2s ease;
-							box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-						`
+						button.style.cssText = ANNOTATION_BUTTON_STYLE
 
 						// Add hover effect
 						button.addEventListener("mouseenter", () => {
@@ -137,6 +128,41 @@ export default defineContentScript({
 
 						copyNode.parentElement?.insertBefore(button, copyNode)
 					}
+				}
+
+				// Add copy URL button above download-slices__confirm-button
+				const downloadButton = screenInspector.querySelector(
+					".download-slices__confirm-button",
+				)
+
+				if (
+					downloadButton &&
+					!downloadButton.previousElementSibling?.classList.contains(
+						"mcp-copy-url-button",
+					)
+				) {
+					const copyUrlButton = document.createElement("button")
+					copyUrlButton.className = "mcp-copy-url-button"
+					copyUrlButton.textContent = "复制 URL"
+					copyUrlButton.style.cssText = COPY_URL_BUTTON_STYLE
+
+					copyUrlButton.addEventListener("click", async (e) => {
+						e.preventDefault()
+						// Empty click handler for now
+						const url = parseSliceUrl(screenInspector)
+						if (!url) {
+							showToast("无法获取URL", "error")
+							return
+						}
+
+						await navigator.clipboard.writeText(url)
+						showToast("复制成功！", "success")
+					})
+
+					downloadButton.parentElement?.insertBefore(
+						copyUrlButton,
+						downloadButton,
+					)
 				}
 			}
 		})

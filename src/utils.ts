@@ -219,3 +219,43 @@ export function showToast(
 		})
 	}, 3000)
 }
+
+export function parseImageSize(str: string) {
+	const pattern = /(\d+)px x (\d+)px/
+	const result = pattern.exec(str)
+
+	if (result && result.length > 2) {
+		return [result[1], result[2]]
+	}
+	return null
+}
+
+export function parseSliceUrl(target: Element) {
+	const thumbImgEl = target.querySelector(".node-box__content .thumb img")
+	const slicesItemCheckEl = target.querySelector(
+		".download-slices .download-slices__scales-item .t-is-checked",
+	)
+
+	if (!slicesItemCheckEl || !thumbImgEl) {
+		return
+	}
+
+	const sizeTextEl = slicesItemCheckEl.querySelector(".t-checkbox__label small")
+	if (!sizeTextEl) {
+		return
+	}
+
+	const sizeText = sizeTextEl.textContent
+	if (!sizeText) {
+		return
+	}
+
+	const size = parseImageSize(sizeText)
+	if (!size) {
+		return
+	}
+	let url = (thumbImgEl as HTMLImageElement).src
+	url = url.replace(/\/thumbnail\/\d+x\d+/, `/thumbnail/${size[0]}x${size[1]}`)
+
+	return url
+}

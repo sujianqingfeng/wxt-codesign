@@ -9,5 +9,6 @@ alwaysApply: true
 
 # 项目结构
 
-- 共享类型放入 src/types.ts
-- 工具函数放入 src/utils.ts
+- 共享类型放入 [types.ts](mdc:src/types.ts)
+- 工具函数放入 [utils.ts](mdc:src/utils.ts)
+- 常量放入 [constants.ts](mdc:src/constants.ts)
