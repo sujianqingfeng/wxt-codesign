@@ -5,6 +5,7 @@ import { onMessage, sendMessage } from "../messages"
 let socket: WebSocket | null = null
 let reconnectInterval: ReturnType<typeof setInterval> | null = null
 let isConnected = false
+let pingInterval: ReturnType<typeof setInterval> | null = null
 
 // 连接WebSocket服务器
 function connectWebSocket() {
@@ -21,24 +22,22 @@ function connectWebSocket() {
 		console.log("WebSocket连接已建立")
 		isConnected = true
 
-		// 发送初始连接消息
-		if (socket) {
-			socket.send(
-				JSON.stringify({
-					type: "connect",
-					data: {
-						clientType: "browser-extension",
-						version: "1.0.0",
-					},
-				}),
-			)
-		}
-
 		// 连接成功后清除重连定时器
 		if (reconnectInterval) {
 			clearInterval(reconnectInterval)
 			reconnectInterval = null
 		}
+
+		// 设置ping定时器，每30秒发送一次ping消息保持连接活跃
+		if (pingInterval) {
+			clearInterval(pingInterval)
+		}
+		pingInterval = setInterval(() => {
+			if (socket && isConnected) {
+				socket.send(JSON.stringify({ type: "ping" }))
+				console.log("发送ping消息以保持连接活跃")
+			}
+		}, 30000)
 	}
 
 	// 接收消息
@@ -49,6 +48,8 @@ function connectWebSocket() {
 		// 处理不同类型的消息
 		if (message.type === "getAnnotation") {
 			handleGetAnnotationRequest(message)
+		} else if (message.type === "pong") {
+			console.log("收到服务器pong响应")
 		}
 	}
 
@@ -56,6 +57,12 @@ function connectWebSocket() {
 	socket.onclose = () => {
 		console.log("WebSocket连接已关闭")
 		isConnected = false
+
+		// 清除ping定时器
+		if (pingInterval) {
+			clearInterval(pingInterval)
+			pingInterval = null
+		}
 
 		// 设置重连
 		if (!reconnectInterval) {
@@ -78,7 +85,6 @@ async function handleGetAnnotationRequest(message: any) {
 			url: "*://codesign.qq.com/app/design/*",
 			currentWindow: true,
 		})
-		console.log("🚀 ~ handleGetAnnotationRequest ~ tabs:", tabs)
 
 		if (tabs.length > 0 && tabs[0].id !== undefined) {
 			try {
@@ -160,6 +166,18 @@ export default defineBackground(() => {
 				success: false,
 				isConnected: false,
 				error: error.message || "检查WebSocket连接状态时发生错误",
+			}
+		}
+	})
+
+	// 使用chrome.alarms API设置保活机制
+	chrome.alarms.create("keepAlive", { periodInMinutes: 1 })
+	chrome.alarms.onAlarm.addListener((alarm) => {
+		if (alarm.name === "keepAlive") {
+			console.log("执行保活操作，确保background不被挂起")
+			// 如果WebSocket连接已断开，尝试重连
+			if (!isConnected) {
+				connectWebSocket()
 			}
 		}
 	})
