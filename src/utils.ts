@@ -259,3 +259,61 @@ export function parseSliceUrl(target: Element) {
 
 	return url
 }
+
+export async function parseAnnotationData() {
+	const designId = parseDesignIdFromUrl(window.location.href)
+
+	if (!designId) {
+		showToast("无法获取设计ID", "error")
+		return
+	}
+
+	const selectedLayerEl = document.querySelector(
+		".selected.layer.hidden-size",
+	) as HTMLElement | null
+
+	if (!selectedLayerEl) {
+		showToast("无法获取选中的图层", "error")
+		return
+	}
+
+	const frameName = selectedLayerEl.dataset.layerName
+	const objectId = selectedLayerEl.dataset.objectId
+
+	if (!frameName || !objectId) {
+		showToast("无法获取图层信息", "error")
+		return
+	}
+
+	const screenElement = document.querySelector(
+		".board-screen-list__item.active",
+	) as HTMLElement | null
+
+	if (!screenElement) {
+		showToast("无法获取当前屏幕", "error")
+		return
+	}
+
+	const screenId = screenElement?.dataset.id
+	if (!screenId) {
+		showToast("无法获取当前屏幕ID", "error")
+		return
+	}
+
+	const screenDetail = await fetchScreenDetailApi(designId, screenId)
+
+	const metaUrl = screenDetail?.meta_url
+	if (!metaUrl) {
+		showToast("无法获取当前屏幕的metaUrl", "error")
+		return
+	}
+
+	const response = await fetch(metaUrl)
+	const data = await response.json()
+
+	const annotationData = getAnnotationByObjectId(objectId, {
+		nodes: [...data.groups, ...data.layers],
+	})
+
+	return annotationData
+}

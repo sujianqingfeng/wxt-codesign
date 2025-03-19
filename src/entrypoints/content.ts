@@ -1,14 +1,7 @@
 import { defineContentScript } from "wxt/sandbox"
 import { ANNOTATION_BUTTON_STYLE, COPY_URL_BUTTON_STYLE } from "../constants"
 import { onMessage } from "../messages"
-import {
-	fetchScreenDetailApi,
-	fetchScreensApi,
-	getAnnotationByObjectId,
-	parseDesignIdFromUrl,
-	parseSliceUrl,
-	showToast,
-} from "../utils"
+import { parseAnnotationData, parseSliceUrl, showToast } from "../utils"
 
 export default defineContentScript({
 	matches: ["*://codesign.qq.com/app/design/*"],
@@ -57,63 +50,7 @@ export default defineContentScript({
 							e.preventDefault()
 							// Empty click handler for now
 
-							const designId = parseDesignIdFromUrl(window.location.href)
-
-							if (!designId) {
-								showToast("无法获取设计ID", "error")
-								return
-							}
-
-							const selectedLayerEl = document.querySelector(
-								".selected.layer.hidden-size",
-							) as HTMLElement | null
-
-							if (!selectedLayerEl) {
-								showToast("无法获取选中的图层", "error")
-								return
-							}
-
-							const frameName = selectedLayerEl.dataset.layerName
-							const objectId = selectedLayerEl.dataset.objectId
-
-							if (!frameName || !objectId) {
-								showToast("无法获取图层信息", "error")
-								return
-							}
-
-							const screenElement = document.querySelector(
-								".board-screen-list__item.active",
-							) as HTMLElement | null
-
-							if (!screenElement) {
-								showToast("无法获取当前屏幕", "error")
-								return
-							}
-
-							const screenId = screenElement?.dataset.id
-							if (!screenId) {
-								showToast("无法获取当前屏幕ID", "error")
-								return
-							}
-
-							const screenDetail = await fetchScreenDetailApi(
-								designId,
-								screenId,
-							)
-
-							const metaUrl = screenDetail?.meta_url
-							if (!metaUrl) {
-								showToast("无法获取当前屏幕的metaUrl", "error")
-								return
-							}
-
-							const response = await fetch(metaUrl)
-							const data = await response.json()
-
-							const annotationData = getAnnotationByObjectId(objectId, {
-								nodes: [...data.groups, ...data.layers],
-							})
-
+							const annotationData = await parseAnnotationData()
 							// Copy to clipboard and show toast
 							try {
 								await navigator.clipboard.writeText(
@@ -172,47 +109,21 @@ export default defineContentScript({
 			subtree: true,
 		})
 
-		// Listen for the sync screens message from popup
-		onMessage("getScreens", async () => {
+		// 监听获取标注数据的消息
+		onMessage("getAnnotation", async () => {
+			console.log("🚀 ~ onMessage ~ getAnnotation:")
 			try {
-				// Extract design ID from URL
-				const designId = parseDesignIdFromUrl(window.location.href)
+				const annotationData = await parseAnnotationData()
 
-				if (!designId) {
-					return {
-						success: false,
-						error: "Could not extract design ID from URL",
-					}
-				}
-
-				const data = await fetchScreensApi(designId)
-
-				// Process the data to combine preview_path and cdn_host for each screen
-				if (data?.data && Array.isArray(data.data)) {
-					for (const screen of data.data) {
-						// Add a full_preview_url property by combining cdn_host and preview_path
-						if (screen.cdn_host && screen.preview_path) {
-							// 确保 cdn_host 以斜杠结尾或 preview_path 以斜杠开头
-							const cdnHost = screen.cdn_host.endsWith("/")
-								? screen.cdn_host
-								: `${screen.cdn_host}/`
-							const previewPath = screen.preview_path.startsWith("/")
-								? screen.preview_path.substring(1)
-								: screen.preview_path
-							screen.full_preview_url = `${cdnHost}${previewPath}`
-						}
-
-						if (screen.meta_url) {
-						}
-					}
-				}
+				// 显示提示
+				showToast("标注数据已发送", "success")
 
 				return {
 					success: true,
-					data: data,
-					designId: designId,
+					data: annotationData,
 				}
 			} catch (error) {
+				console.error("获取标注数据时出错:", error)
 				return {
 					success: false,
 					error: error instanceof Error ? error.message : String(error),

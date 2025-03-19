@@ -1,20 +1,29 @@
+import { defineExtensionMessaging } from "@webext-core/messaging"
 
-import { defineExtensionMessaging } from '@webext-core/messaging';
+type CodesignProtocolMap = {
+	checkWSConnection(data?: unknown): Promise<{
+		success: boolean
+		isConnected: boolean
+		error?: string
+	}>
 
-// Define protocol map for messaging
-interface CodesignProtocolMap {
-  getScreens(data: unknown): Promise<{
-    success: boolean;
-    data?: any;
-    designId?: string;
-    error?: string;
-  }>;
+	getAnnotation: (data: {
+		objectId?: string
+		[key: string]: any
+	}) => Promise<{
+		success: boolean
+		data?: any
+		error?: string
+	}>
 
-
+	sendAnnotation: (data: unknown) => Promise<{
+		success: boolean
+		data?: any
+		error?: string
+	}>
 }
 
+const { onMessage, sendMessage } =
+	defineExtensionMessaging<CodesignProtocolMap>()
 
-const { onMessage,sendMessage } = defineExtensionMessaging<CodesignProtocolMap>();
-
-
-export { onMessage,sendMessage };
+export { onMessage, sendMessage }
