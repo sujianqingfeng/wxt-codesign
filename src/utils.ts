@@ -269,7 +269,7 @@ export async function parseAnnotationData() {
 	}
 
 	const selectedLayerEl = document.querySelector(
-		".selected.layer.hidden-size",
+		".selected.layer",
 	) as HTMLElement | null
 
 	if (!selectedLayerEl) {
