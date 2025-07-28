@@ -10,9 +10,9 @@ export default defineConfig({
 	outDir: "dist",
 	entrypointsDir: "src/entrypoints",
 	manifest: {
-		name: "Codesign Screen Extractor",
-		description: "Extract screen data from Codesign projects",
-		permissions: ["activeTab", "tabs", "storage", "alarms"],
+		name: "Codesign Annotated Extractor",
+		description: "Extract annotated data from Codesign",
+		permissions: ["tabs", "alarms"],
 		host_permissions: ["*://codesign.qq.com/*"],
 		background: {
 			persistent: true,

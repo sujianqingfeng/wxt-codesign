@@ -2,7 +2,7 @@
 	"name": "wxt-codesign",
 	"description": "codesign labels",
 	"private": true,
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"type": "module",
 	"scripts": {
 		"dev": "wxt",
@@ -16,7 +16,6 @@
 	},
 	"dependencies": {
 		"@webext-core/messaging": "^2.2.0",
-		"@wxt-dev/storage": "^1.1.0",
 		"lucide-react": "^0.476.0",
 		"react": "^19.0.0",
 		"react-dom": "^19.0.0"

@@ -11,9 +11,6 @@ importers:
       '@webext-core/messaging':
         specifier: ^2.2.0
         version: 2.2.0
-      '@wxt-dev/storage':
-        specifier: ^1.1.0
-        version: 1.1.0
       lucide-react:
         specifier: ^0.476.0
         version: 0.476.0(react@19.0.0)
