@@ -11,6 +11,74 @@ export default defineContentScript({
 			const screenInspector = document.querySelector(".screen-inspector")
 
 			if (screenInspector) {
+				// Check if asset-list ul element exists
+				const assetList = screenInspector.querySelector("ul.asset-list")
+				if (assetList) {
+					console.log("Asset list found in screen inspector")
+					
+					// Add copy buttons to slice-layer items
+					const sliceLayers = assetList.querySelectorAll("li.slice-layer")
+					for (const sliceLayer of sliceLayers) {
+						// Check if we already added our copy button
+						if (!sliceLayer.querySelector(".mcp-slice-copy-button")) {
+							const copyButton = document.createElement("button")
+							copyButton.className = "mcp-slice-copy-button"
+							copyButton.textContent = "复制"
+							copyButton.style.cssText = `
+								margin-left: 8px;
+								padding: 2px 8px;
+								border: 1px solid #e2e8f0;
+								border-radius: 3px;
+								background-color: #ffffff;
+								color: #475569;
+								font-size: 11px;
+								font-weight: 500;
+								cursor: pointer;
+								transition: all 0.2s ease;
+							`
+
+							// Add hover effect
+							copyButton.addEventListener("mouseenter", () => {
+								copyButton.style.backgroundColor = "#f8fafc"
+								copyButton.style.borderColor = "#cbd5e1"
+							})
+
+							copyButton.addEventListener("mouseleave", () => {
+								copyButton.style.backgroundColor = "#ffffff"
+								copyButton.style.borderColor = "#e2e8f0"
+							})
+
+							// Add click handler to copy image URL
+							copyButton.addEventListener("click", async (e) => {
+								e.preventDefault()
+								e.stopPropagation()
+								
+								try {
+									// Find the picture>img element within this slice-layer
+									const imgElement = sliceLayer.querySelector("picture img")
+									if (imgElement) {
+										const imageUrl = imgElement.src
+										if (imageUrl) {
+											await navigator.clipboard.writeText(imageUrl)
+											showToast("图片URL已复制", "success")
+										} else {
+											showToast("无法获取图片URL", "error")
+										}
+									} else {
+										showToast("未找到图片元素", "error")
+									}
+								} catch (error) {
+									console.error("复制图片URL失败:", error)
+									showToast("复制失败，请重试", "error")
+								}
+							})
+
+							// Insert the button at the end of the slice-layer
+							sliceLayer.appendChild(copyButton)
+						}
+					}
+				}
+
 				// Add custom copy annotation data buttons
 				const copyNodes = screenInspector.querySelectorAll(".css-node__copy")
 
