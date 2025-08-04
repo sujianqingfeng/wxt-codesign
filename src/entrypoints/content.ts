@@ -22,15 +22,30 @@ function createButton(
 	button.textContent = text
 	button.style.cssText = style
 
+	// 存储原始样式用于重置
+	const originalStyle = {
+		backgroundColor: button.style.backgroundColor,
+		borderColor: button.style.borderColor,
+	}
+
 	// 添加悬停效果
 	button.addEventListener("mouseenter", () => {
-		button.style.backgroundColor = "#f8fafc"
-		button.style.borderColor = "#cbd5e1"
+		// 根据原始背景色决定悬停颜色
+		if (originalStyle.backgroundColor === "rgb(34, 35, 36)" || originalStyle.backgroundColor === "#222324") {
+			// 深色按钮（复制URL按钮）
+			button.style.backgroundColor = "#404142"
+			button.style.borderColor = "#404142"
+		} else {
+			// 浅色按钮
+			button.style.backgroundColor = "#f8fafc"
+			button.style.borderColor = "#cbd5e1"
+		}
 	})
 
 	button.addEventListener("mouseleave", () => {
-		button.style.backgroundColor = "#ffffff"
-		button.style.borderColor = "#e2e8f0"
+		// 重置为原始背景色
+		button.style.backgroundColor = originalStyle.backgroundColor
+		button.style.borderColor = originalStyle.borderColor
 	})
 
 	// 添加点击效果
