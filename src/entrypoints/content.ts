@@ -4,6 +4,7 @@ import {
 	BUTTON_TEXTS,
 	CLASS_NAMES,
 	COPY_URL_BUTTON_STYLE,
+	ICONS,
 	SELECTORS,
 	SLICE_COPY_BUTTON_STYLE,
 } from "../constants"
@@ -16,11 +17,35 @@ function createButton(
 	text: string,
 	style: string,
 	clickHandler: (e: MouseEvent) => void,
+	iconSvg?: string,
 ): HTMLButtonElement {
 	const button = document.createElement("button")
 	button.className = className
-	button.textContent = text
 	button.style.cssText = style
+
+	// 创建按钮内容容器
+	const buttonContent = document.createElement("div")
+	buttonContent.style.display = "flex"
+	buttonContent.style.alignItems = "center"
+	buttonContent.style.gap = "4px"
+	buttonContent.style.width = "100%"
+	buttonContent.style.justifyContent = "center"
+
+	// 添加图标（如果提供）
+	if (iconSvg) {
+		const iconWrapper = document.createElement("span")
+		iconWrapper.innerHTML = iconSvg
+		iconWrapper.style.display = "flex"
+		iconWrapper.style.alignItems = "center"
+		buttonContent.appendChild(iconWrapper)
+	}
+
+	// 添加文本
+	const textSpan = document.createElement("span")
+	textSpan.textContent = text
+	buttonContent.appendChild(textSpan)
+
+	button.appendChild(buttonContent)
 
 	// 存储原始样式用于重置
 	const originalStyle = {
@@ -31,7 +56,10 @@ function createButton(
 	// 添加悬停效果
 	button.addEventListener("mouseenter", () => {
 		// 根据原始背景色决定悬停颜色
-		if (originalStyle.backgroundColor === "rgb(34, 35, 36)" || originalStyle.backgroundColor === "#222324") {
+		if (
+			originalStyle.backgroundColor === "rgb(34, 35, 36)" ||
+			originalStyle.backgroundColor === "#222324"
+		) {
 			// 深色按钮（复制URL按钮）
 			button.style.backgroundColor = "#404142"
 			button.style.borderColor = "#404142"
@@ -93,6 +121,7 @@ function handleAssetList(assetList: HTMLUListElement): void {
 						showToast("复制失败，请重试", "error")
 					}
 				},
+				ICONS.COPY,
 			)
 
 			sliceLayer.appendChild(copyButton)
@@ -128,9 +157,16 @@ function handleAnnotationButtons(screenInspector: Element): void {
 						showToast("复制失败，请重试", "error")
 					}
 				},
+				ICONS.ANNOTATION,
 			)
 
 			copyNode.parentElement?.insertBefore(button, copyNode)
+
+			// 为父容器添加居中对齐样式
+			if (copyNode.parentElement) {
+				copyNode.parentElement.style.display = "flex"
+				copyNode.parentElement.style.alignItems = "center"
+			}
 		}
 	}
 }
@@ -163,6 +199,7 @@ function handleCopyUrlButton(screenInspector: Element): void {
 				await navigator.clipboard.writeText(url)
 				showToast("复制成功！", "success")
 			},
+			ICONS.URL,
 		)
 
 		downloadButton.parentElement?.insertBefore(copyUrlButton, downloadButton)
